@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Взято отсюда с минорным исправлением (function -> func): https://stackoverflow.com/a/40965385
 
 from threading import Timer
 from time import time
