@@ -11,6 +11,8 @@ try:
     VERSION = str(getenv("VERSION", "Unknown"))
     COMMIT = str(run(["git log --pretty=format:'%h' -n 1"], shell=True, stdout=PIPE).stdout.decode("UTF-8"))
     DEVELOPER_MODE = parse_as_boolean(getenv("DEVELOPER_MODE", False))
+    BOT_TOKEN = str(getenv("BOT_TOKEN", None))
+    WORKERS = int(getenv("WORKERS", 2))
 
     # Данные от Redis
     REDIS_HOST = str(getenv("REDIS_HOST", "127.0.0.1"))
