@@ -8,6 +8,7 @@ from telegram import Bot
 from app.telegram.commands.debug import debug as debug_command
 from app.telegram.commands.start import start as start_command
 from app.telegram.commands.token import token as token_command
+from app.telegram.commands.activate import activate as activate_command
 import logging
 
 
@@ -19,6 +20,7 @@ def bot_initialize():
         bot_dispatcher.add_handler(CommandHandler("debug", debug_command))
         bot_dispatcher.add_handler(CommandHandler("start", start_command))
         bot_dispatcher.add_handler(CommandHandler("token", token_command))
+        bot_dispatcher.add_handler(CommandHandler("activate", activate_command))
         bot_dispatcher.add_error_handler(error_handler)
 
         bot_updater.start_polling(clean=True, poll_interval=0.01)

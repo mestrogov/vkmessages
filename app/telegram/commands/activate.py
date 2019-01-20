@@ -6,7 +6,7 @@ import logging
 import asyncio
 
 
-def token(bot, message):
+def activate(bot, message):
     try:
         message = message.message
         loop = asyncio.new_event_loop()
@@ -14,11 +14,8 @@ def token(bot, message):
 
         asyncio.get_event_loop().run_until_complete(redis.execute("HSET", "users:{0}".format(message.from_user.id),
                                                                   "active", "True"))
-        asyncio.get_event_loop().run_until_complete(redis.execute("HSET", "users:{0}".format(message.from_user.id),
-                                                                  "VK_TOKEN", message.text.split(" ")[1]))
 
-        bot.send_message(message.from_user.id, "Отлично! Я запомнил твой токен доступа VK, теперь буду пересылать "
-                                               "сообщения оттуда. Спасибо, что используешь меня!")
+        bot.send_message(message.from_user.id, "Хорошо! Я изменил твой статус на активный.")
     except Exception as e:
         try:
             bot.send_message(message.from_user.id,
