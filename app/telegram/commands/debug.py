@@ -11,8 +11,8 @@ def debug(bot, message):
 
         bot.send_message(message.from_user.id,
                          "Ниже находится информация, которая может оказаться полезной."
-                         "\n\n*Информация о приложении:* \nVersion: `{0}`\nCommit: `{1}`\nDeveloper Mode: `{2}`"
-                         "\n\n*Информация о пользователе:* \nUser ID: `{3}`\nMessage ID: `{4}`\nLanguage Code: `{5}`".
+                         "\n\n*Информация о приложении:* `\nVersion: {0}`\n`Commit: {1}`\n`Developer Mode: {2}`"
+                         "\n\n*Информация о пользователе:* \n`User ID: {3}`\n`Message ID: {4}`\n`Language Code: {5}`".
                          format(config.VERSION, config.COMMIT, config.DEVELOPER_MODE, message.from_user.id,
                                 message.message_id, message.from_user.language_code), parse_mode="Markdown")
     except Exception as e:
