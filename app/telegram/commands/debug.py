@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from app import logging
+from app import config as config
 import logging
 
 
@@ -9,11 +10,11 @@ def debug(bot, message):
         message = message.message
 
         bot.send_message(message.from_user.id,
-                         "Ниже находится информация, которая может быть полезна при разработке и не только."
-                         "\n\nUser ID: `{0}`"
-                         "\nMessage ID: `{1}`"
-                         "\nLanguage Code: `{2}`".format(str(message.from_user.id), str(message.message_id),
-                                                         str(message.from_user.language_code)), parse_mode="Markdown")
+                         "Ниже находится информация, которая может оказаться полезной."
+                         "\n\n*Информация о приложении:* \nVersion: `{0}`\nCommit: `{1}`\nDeveloper Mode: `{2}`"
+                         "\n\n*Информация о пользователе:* \nUser ID: `{3}`\nMessage ID: `{4}`\nLanguage Code: `{5}`".
+                         format(config.VERSION, config.COMMIT, config.DEVELOPER_MODE, message.from_user.id,
+                                message.message_id, message.from_user.language_code), parse_mode="Markdown")
     except Exception as e:
         try:
             bot.send_message(message.from_user.id,
