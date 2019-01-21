@@ -13,12 +13,13 @@ import logging
 
 def start_polling(bot):
     try:
-        while True:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            session = ClientSession()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-            for user in (asyncio.get_event_loop().run_until_complete(redis.execute("SCAN", "0", "MATCH", "users:*"))['details'][1]):
+        users = asyncio.get_event_loop().run_until_complete(redis.execute("SCAN", "0", "MATCH", "users:*"))['details'][1]
+        while True:
+            session = ClientSession()
+            for user in users:
                 user_id = user
                 # Взято отсюда: https://stackoverflow.com/a/6900977
                 user = dict(zip_longest(*[iter((asyncio.get_event_loop().run_until_complete(redis.execute("HGETALL", user)))
