@@ -24,7 +24,7 @@ def bot_initialize():
         bot_dispatcher.add_error_handler(error_handler)
 
         bot_updater.start_polling(clean=True, poll_interval=0.01)
-        return Bot(config.BOT_TOKEN).get_me()
+        return Bot(config.BOT_TOKEN)
     except Exception as e:
         logging.critical("Произошла ошибка при инициализации бота.", exc_info=True)
         return e
