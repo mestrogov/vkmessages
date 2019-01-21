@@ -15,6 +15,6 @@ if __name__ == "__main__":
         bot = bot_initialize()
 
         logging.info("Информация о Боте в Telegram: " + str(bot.get_me()))
-        Thread(target=vk_start_polling, name="vk_polling").start()
+        Thread(target=vk_start_polling, args=(bot,), name="vk_polling").start()
     except Exception as e:
         logging.critical("Произошла ошибка в работе приложения.", exc_info=True)

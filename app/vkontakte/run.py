@@ -10,7 +10,7 @@ import asyncio
 import logging
 
 
-def start_polling():
+def start_polling(bot):
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -22,7 +22,7 @@ def start_polling():
             user = dict(zip_longest(*[iter((asyncio.get_event_loop().run_until_complete(redis.execute("HGETALL", user)))
                                            ['details'])] * 2, fillvalue=""))
             if parse_as_boolean(user['active']):
-                asyncio.get_event_loop().run_until_complete(poll_user(user, user_id, session))
+                asyncio.get_event_loop().run_until_complete(poll_user(user, user_id, bot, session))
     except Exception as e:
         logging.error("Произошла ошибка при попытке начала polling'а всех аккаунтов VK.", exc_info=True)
         return e
