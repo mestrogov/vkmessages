@@ -3,7 +3,7 @@
 from app import logging
 from app.remote.redis import Redis as redis
 from app.utils.parse_as_boolean import parse_as_boolean
-from app.vkontakte.poll_user import poll_user
+from app.vk.poll_user import poll_user
 from aiohttp import ClientSession
 from itertools import zip_longest
 from time import sleep
@@ -17,9 +17,11 @@ def start_polling(bot):
         asyncio.set_event_loop(loop)
 
         users = asyncio.get_event_loop().run_until_complete(redis.execute("SCAN", "0", "MATCH", "users:*"))['details'][1]
+        logging.debug("Users: " + str(users))
         while True:
             session = ClientSession()
             for user in users:
+                logging.debug("User: " + str(user))
                 user_id = user
                 # Взято отсюда: https://stackoverflow.com/a/6900977
                 user = dict(zip_longest(*[iter((asyncio.get_event_loop().run_until_complete(redis.execute("HGETALL", user)))

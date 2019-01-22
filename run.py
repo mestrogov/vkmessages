@@ -3,7 +3,7 @@
 from app import logging
 from app.remote.redis import Redis as redis
 from app.telegram.run import bot_initialize
-from app.vkontakte.run import start_polling as vk_start_polling
+from app.vk.run import start_polling as vk_start_polling
 from threading import Thread
 import logging
 import asyncio
