@@ -3,6 +3,7 @@
 from app import logging
 from app.remote.redis import Redis as redis
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from app.utils.markup_fixes import markup_multipurpose_fixes
 from operator import itemgetter
 from time import sleep
 import asyncio
@@ -47,6 +48,7 @@ async def poll_user(user, user_id, bot, session):
                 continue
 
             # Проверяем сообщение на наличие вложений
+            # TODO: Сделать нормальный +1 вместо лишней переменной num
             num = 0
             photos = []
             for attachment in message['attachments']:
@@ -56,7 +58,8 @@ async def poll_user(user, user_id, bot, session):
                 num += 1
 
             sender = [sender for sender in response_lp['profiles'] if sender['id'] == message['from_id']][0]
-            message_text = "*{0} {1}*\n> {2}".format(sender['first_name'], sender['last_name'], message['text'])
+            message_text = "*{0} {1}*\n> {2}".format(sender['first_name'], sender['last_name'],
+                                                     markup_multipurpose_fixes(message['text']))
 
             # Проверяем наличие фото, если есть, то отправляем отдельным сообщением
             if photos:
