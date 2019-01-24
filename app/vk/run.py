@@ -16,12 +16,12 @@ def start_polling(bot):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-        users = asyncio.get_event_loop().run_until_complete(redis.execute("SCAN", "0", "MATCH", "users:*"))['details'][1]
-        logging.debug("Users: " + str(users))
+        users = asyncio.get_event_loop().run_until_complete(redis.execute("SMEMBERS", "users"))['details']
+        logging.debug("Users in Redis: " + str(users))
         while True:
             session = ClientSession()
             for user in users:
-                logging.debug("User: " + str(user))
+                logging.debug("User in loop: " + str(user))
                 user_id = user
                 # Взято отсюда: https://stackoverflow.com/a/6900977
                 user = dict(zip_longest(*[iter((asyncio.get_event_loop().run_until_complete(redis.execute("HGETALL", user)))

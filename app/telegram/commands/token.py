@@ -13,8 +13,10 @@ def token(bot, message):
         asyncio.set_event_loop(loop)
 
         asyncio.get_event_loop().run_until_complete(
-            redis.execute("HSET", "users:{0}".format(message.from_user.id), "active", "True", "VK_TOKEN",
+            redis.execute("HSET", "user:{0}".format(message.from_user.id), "active", "True", "VK_TOKEN",
                           message.text.split(" ")[1]))
+        asyncio.get_event_loop().run_until_complete(
+            redis.execute("SADD", "users", "user:{0}".format(message.from_user.id)))
 
         bot.send_message(message.from_user.id, "Отлично! Я запомнил твой токен доступа VK, теперь буду пересылать "
                                                "сообщения оттуда. Спасибо, что используешь меня!")

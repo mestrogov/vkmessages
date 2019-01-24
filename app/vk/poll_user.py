@@ -16,6 +16,7 @@ async def poll_user(user, user_id, bot, session):
         asyncio.set_event_loop(loop)
         logging.debug("Entered poll_user method, user: {0}, user_id: {1}".format(user, user_id))
 
+        # TODO: Изменить на assert, чтобы была нормальная проверка
         try:
             user['VK_TOKEN']
         except (KeyError, TypeError):
@@ -58,8 +59,11 @@ async def poll_user(user, user_id, bot, session):
                 num += 1
 
             sender = [sender for sender in response_lp['profiles'] if sender['id'] == message['from_id']][0]
-            message_text = "*{0} {1}*\n> {2}".format(sender['first_name'], sender['last_name'],
-                                                     markup_multipurpose_fixes(message['text']))
+            if message['text']:
+                message_text = "*{0} {1}*\n> {2}".format(sender['first_name'], sender['last_name'],
+                                                         markup_multipurpose_fixes(message['text']))
+            else:
+                message_text = "*{0} {1}*".format(sender['first_name'], sender['last_name'])
 
             # Проверяем наличие фото, если есть, то отправляем отдельным сообщением
             if photos:
