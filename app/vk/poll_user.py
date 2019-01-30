@@ -54,7 +54,7 @@ async def poll_user(user, user_id, bot, session):
                 continue
 
             # Проверяем сообщение на наличие вложений
-            # TODO: Сделать нормальный +1 вместо лишней переменной num
+            # TODO: Сделать нормальный +1 вместо лишней переменной num (или вообще убрать ее)
             num = 0
             photos = []
             for attachment in message['attachments']:
@@ -63,17 +63,23 @@ async def poll_user(user, user_id, bot, session):
                     photos.extend([InputMediaPhoto(photo_sorted_sizes[-1]['url'])])
                 if attachment['type'] == "sticker":
                     sticker_hash = sha1(attachment['sticker']['images'][4]['url'].encode("UTF-8")).hexdigest()
-                    # TODO: Переписать на кэш, связанный с Telegram'ом (то есть кэширование file_id)
-                    if not os.path.exists("data/stickers"):
-                        os.makedirs("data/stickers")
-                    if not os.path.exists("data/stickers/sticker_{0}.webp".format(sticker_hash)):
+                    sticker_file_id = (await redis.execute("HGET", "stickers:{0}".format(sticker_hash), "FILE_ID"))['details']
+
+                    if sticker_file_id:
+                        logging.debug("Sticker with hash {0} is in cache, sending it by file id.".format(sticker_hash))
+
+                        bot.send_sticker(tg_user_id, sticker=sticker_file_id)
+                    else:
                         logging.debug("Sticker with hash {0} not found, creating it.".format(sticker_hash))
+
                         sticker_png = Image.open(
                             BytesIO(await (await session.get(attachment['sticker']['images'][4]['url'])).read()))
-                        sticker_png.save("data/stickers/sticker_{0}.webp".format(sticker_hash), format="WEBP")
+                        sticker_webp = BytesIO()
+                        sticker_png.save(sticker_webp, format="WEBP", lossless=True, quality=100, method=6)
+                        sticker_webp.seek(0)
 
-                    with open("data/stickers/sticker_{0}.webp".format(sticker_hash), "rb") as sticker:
-                        bot.send_sticker(tg_user_id, sticker=sticker)
+                        sticker = bot.send_sticker(tg_user_id, sticker=sticker_webp)
+                        await redis.execute("HSET", "stickers:{0}".format(sticker_hash), "FILE_ID", sticker.sticker.file_id)
                 num += 1
 
             sender = [sender for sender in response_lp['profiles'] if sender['id'] == message['from_id']][0]
