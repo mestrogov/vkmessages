@@ -20,16 +20,17 @@ async def poll_user(user, user_id, bot, session):
         tg_user_id = int(user_id.split(":")[1])
         logging.debug("Entered poll_user method, user: {0}, user_id: {1}".format(user, user_id))
 
-        # TODO: Изменить на assert, чтобы была нормальная проверка
         try:
-            user['VK_TOKEN']
+            assert user['VK_TOKEN']
         except (KeyError, TypeError):
             return {"status": "ERROR", "details": "У пользователя нет токена VK"}
+
         try:
-            user['VK_LP_KEY']
-            user['VK_LP_SERVER']
-            user['VK_LP_PTS']
+            assert user['VK_LP_KEY']
+            assert user['VK_LP_SERVER']
+            assert user['VK_LP_PTS']
         except (KeyError, TypeError):
+            logging.debug("У пользователя {0} нет данных о LongPoll сервере; запрашиваю.".format(user_id))
             async with session.post("https://api.vk.com/method/messages.getLongPollServer", params={
                                     "access_token": user['VK_TOKEN'], "need_pts": 1, "lp_version": 3, "v": "5.92"}) as response_lps:
                 logging.debug("Returned response for getLongPollServer: " + str(await response_lps.json()))
@@ -53,7 +54,6 @@ async def poll_user(user, user_id, bot, session):
                 continue
 
             # Проверяем сообщение на наличие вложений в сообщении
-            # TODO: Сделать нормальный +1 вместо лишней переменной num (или вообще убрать ее)
             photos = []
             for attachment in message['attachments']:
                 if attachment['type'] == "photo":
