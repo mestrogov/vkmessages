@@ -74,6 +74,6 @@ def refresh_token(token, secret, device_id, client_user_agent, version):
         "User-Agent": client_user_agent
     }
 
-    data = sign_data(data, "auth.refreshToken", secret)
-    response = requests.post("https://api.vk.com/method/auth.refreshToken", data=data, headers=headers).json()
+    response = requests.post("https://api.vk.com/method/auth.refreshToken",
+                             data=sign_data(data, "auth.refreshToken", secret), headers=headers).json()
     return response

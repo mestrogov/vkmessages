@@ -2,7 +2,7 @@
 
 from app import logging
 from app.remote.redis import Redis as redis
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
 from PIL import Image
 from io import BytesIO
 from hashlib import sha1
@@ -60,24 +60,39 @@ def poll_user(user, user_id, bot):
                 continue
 
             # Проверяем сообщение на наличие вложений в сообщении
+            media = []
             for attachment in message['attachments']:
                 if attachment['type'] == "photo":
-                    photos = []
                     photo_sorted_sizes = sorted(attachment['photo']['sizes'], key=itemgetter('width'))
-                    photos.extend([InputMediaPhoto(photo_sorted_sizes[-1]['url'])])
+                    media.extend([InputMediaPhoto(photo_sorted_sizes[-1]['url'])])
+                if attachment['type'] == "video":
+                    # Получаем видео, которое сможем загрузить при лимите в 50 МБ
+                    video_url = None
+                    for video_quality in attachment['video']['files']:
+                        if video_quality == "hls" or video_quality == "external":
+                            continue
+                        video_size = int(int(requests.get(attachment['video']['files'][video_quality], stream=True).
+                                             headers['Content-length'])/1024/1024)
+                        if video_size < 50:
+                            video_url = attachment['video']['files'][video_quality]
+                    if not video_url:
+                        continue
 
-                    bot.send_media_group(telegram_user_id, photos)
+                    # TODO: Добавить кэширование видео
+                    video = BytesIO()
+                    video.write(requests.get(video_url, stream=True).content)
+                    video.seek(0)
+                    media.extend([InputMediaVideo(video, caption=attachment['video']['title'], supports_streaming=True)])
                 if attachment['type'] == "sticker":
                     sticker_hash = sha1(attachment['sticker']['images'][4]['url'].encode("UTF-8")).hexdigest()
                     sticker_file_id = asyncio.get_event_loop().run_until_complete(
-                        redis.execute("HGET", "stickers:{0}".format(sticker_hash), "FILE_ID"))['details']
+                        redis.execute("HGET", "files:stickers:{0}".format(sticker_hash), "FILE_ID"))['details']
 
                     if sticker_file_id:
-                        logging.debug("Sticker with hash {0} is in cache, sending it by file id.".format(sticker_hash))
-
+                        logging.debug("Стикер с хэшем {0} находится в кэше, отправляется по File ID.".format(sticker_hash))
                         bot.send_sticker(telegram_user_id, sticker=sticker_file_id)
                     else:
-                        logging.debug("Sticker with hash {0} not found, creating it.".format(sticker_hash))
+                        logging.debug("Стикер с хэшем {0} не найдено в кэше, загружается новый.".format(sticker_hash))
 
                         sticker_png = Image.open(BytesIO(
                             requests.get(attachment['sticker']['images'][4]['url'], stream=True).content))
@@ -87,7 +102,7 @@ def poll_user(user, user_id, bot):
 
                         sticker = bot.send_sticker(telegram_user_id, sticker=sticker_webp)
                         asyncio.get_event_loop().run_until_complete(
-                            redis.execute("HSET", "stickers:{0}".format(sticker_hash), "FILE_ID", sticker.sticker.file_id))
+                            redis.execute("HSET", "files:stickers:{0}".format(sticker_hash), "FILE_ID", sticker.sticker.file_id))
 
             sender = [sender for sender in response_lph['profiles'] if sender['id'] == message['from_id']][0]
             if message['text']:
@@ -95,6 +110,10 @@ def poll_user(user, user_id, bot):
                                                          markup_multipurpose_fixes(message['text']))
             else:
                 message_text = "*{0} {1}*".format(sender['first_name'], sender['last_name'])
+
+            # Проверяем, есть ли какое-то медиа (фотографии, видео)
+            if media:
+                bot.send_media_group(telegram_user_id, media, timeout=120)
 
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📋 Подробнее", callback_data="TEST")]])
             message_data = bot.send_message(telegram_user_id, message_text, reply_markup=markup, parse_mode="Markdown")
