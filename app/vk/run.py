@@ -23,10 +23,11 @@ def start_polling(bot):
             for user in users:
                 logging.debug("User in loop: " + str(user))
                 user_id = user
-                # Взято отсюда: https://stackoverflow.com/a/6900977
+                # Делаем dict из list'а (HGETALL возвращает list); взято отсюда: https://stackoverflow.com/a/6900977
                 user = dict(zip_longest(*[iter((asyncio.get_event_loop().run_until_complete(redis.execute("HGETALL", user)))
                                                ['details'])] * 2, fillvalue=""))
                 if parse_as_boolean(user['active']):
+                    # TODO: Использовать Dramatiq вместо этого самопального кода
                     asyncio.get_event_loop().run_until_complete(poll_user(user, user_id, bot, session))
 
             sleep(0.1)

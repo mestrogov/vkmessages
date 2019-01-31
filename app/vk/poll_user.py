@@ -9,7 +9,6 @@ from hashlib import sha1
 from app.utils.markup_fixes import markup_multipurpose_fixes
 from app import config
 from operator import itemgetter
-import os
 import asyncio
 import logging
 
@@ -53,9 +52,8 @@ async def poll_user(user, user_id, bot, session):
             if int(message['out']) == 1:
                 continue
 
-            # Проверяем сообщение на наличие вложений
+            # Проверяем сообщение на наличие вложений в сообщении
             # TODO: Сделать нормальный +1 вместо лишней переменной num (или вообще убрать ее)
-            num = 0
             photos = []
             for attachment in message['attachments']:
                 if attachment['type'] == "photo":
@@ -72,15 +70,13 @@ async def poll_user(user, user_id, bot, session):
                     else:
                         logging.debug("Sticker with hash {0} not found, creating it.".format(sticker_hash))
 
-                        sticker_png = Image.open(
-                            BytesIO(await (await session.get(attachment['sticker']['images'][4]['url'])).read()))
+                        sticker_png = Image.open(BytesIO(await (await session.get(attachment['sticker']['images'][4]['url'])).read()))
                         sticker_webp = BytesIO()
                         sticker_png.save(sticker_webp, format="WEBP", lossless=True, quality=100, method=6)
                         sticker_webp.seek(0)
 
                         sticker = bot.send_sticker(tg_user_id, sticker=sticker_webp)
                         await redis.execute("HSET", "stickers:{0}".format(sticker_hash), "FILE_ID", sticker.sticker.file_id)
-                num += 1
 
             sender = [sender for sender in response_lp['profiles'] if sender['id'] == message['from_id']][0]
             if message['text']:
