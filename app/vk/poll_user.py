@@ -35,7 +35,7 @@ def poll_user(user, user_id, bot):
         except (KeyError, TypeError):
             logging.debug("У пользователя {0} нет данных о LongPoll сервере.".format(user_id))
 
-            data = {"need_pts": 1, "lp_version": 3, "access_token": user['VK_TOKEN'], "v": "5.92"}
+            data = {"need_pts": 1, "lp_version": 3, "access_token": user['VK_TOKEN'], "v": 5.92}
             response_lps = requests.post("https://api.vk.com/method/messages.getLongPollServer",
                                          data=sign_data(data, "messages.getLongPollServer", user['VK_SECRET'])).json()
             logging.debug("Ответ на запрос метода messages.getLongPollServer: " + str(response_lps))
@@ -79,7 +79,8 @@ def poll_user(user, user_id, bot):
                     else:
                         logging.debug("Sticker with hash {0} not found, creating it.".format(sticker_hash))
 
-                        sticker_png = Image.open(BytesIO(requests.get(attachment['sticker']['images'][4]['url'], stream=True).raw))
+                        sticker_png = Image.open(BytesIO(
+                            requests.get(attachment['sticker']['images'][4]['url'], stream=True).content))
                         sticker_webp = BytesIO()
                         sticker_png.save(sticker_webp, format="WEBP", lossless=True, quality=100, method=6)
                         sticker_webp.seek(0)
