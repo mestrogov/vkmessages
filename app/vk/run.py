@@ -4,7 +4,6 @@ from app import logging
 from app.remote.redis import Redis as redis
 from app.utils.parse_as_boolean import parse_as_boolean
 from app.vk.poll_user import poll_user
-from aiohttp import ClientSession
 from itertools import zip_longest
 from time import sleep
 import asyncio
@@ -19,7 +18,6 @@ def start_polling(bot):
         users = asyncio.get_event_loop().run_until_complete(redis.execute("SMEMBERS", "users"))['details']
         logging.debug("Users in Redis: " + str(users))
         while True:
-            session = ClientSession()
             for user in users:
                 logging.debug("User in loop: " + str(user))
                 user_id = user
@@ -28,7 +26,8 @@ def start_polling(bot):
                                                ['details'])] * 2, fillvalue=""))
                 if parse_as_boolean(user['active']):
                     # TODO: Использовать Dramatiq вместо этого самопального кода
-                    asyncio.get_event_loop().run_until_complete(poll_user(user, user_id, bot, session))
+                    result = poll_user(user, user_id, bot)
+                    logging.debug("Выполнен polling пользователя {0}, результат: {1}".format(user_id, result))
 
             sleep(0.1)
     except Exception as e:
