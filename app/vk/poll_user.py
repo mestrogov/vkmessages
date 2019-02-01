@@ -144,5 +144,5 @@ def poll_user(user, user_id, bot):
         asyncio.get_event_loop().run_until_complete(redis.execute("HSET", user_id, "VK_LP_PTS", response_lph['new_pts']))
         return {"status": "OK", "details": None}
     except Exception as e:
-        logging.error("Произошла ошибка при поллинге аккаунта VK пользователя {0}.".format(user_id), exc_info=True)
+        logging.error("Произошла ошибка при polling'е аккаунта VK пользователя {0}.".format(user_id), exc_info=True)
         return e
