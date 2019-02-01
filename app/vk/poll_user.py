@@ -83,17 +83,34 @@ def poll_user(user, user_id, bot):
                     video.write(requests.get(video_url, stream=True).content)
                     video.seek(0)
                     media.extend([InputMediaVideo(video, caption=attachment['video']['title'], supports_streaming=True)])
+                if attachment['type'] == "audio":
+                    audio_hash = sha1(attachment['audio']['url'].encode("UTF-8")).hexdigest()
+                    audio_file_id = asyncio.get_event_loop().run_until_complete(
+                        redis.execute("HGET", "files:audio:{0}".format(audio_hash), "FILE_ID"))['details']
+
+                    if audio_file_id:
+                        logging.debug("Аудио с хэшем {0} находится в кэше, отправляется по File ID.".format(audio_hash))
+                        bot.send_audio(telegram_user_id, audio_file_id)
+                    else:
+                        logging.debug("Аудио с хэшем {0} не найдено в кэше, загружается новый.".format(audio_hash))
+                        audio = BytesIO()
+                        audio.write(requests.get(attachment['audio']['url'], stream=True).content)
+                        audio.seek(0)
+
+                        audio = bot.send_audio(telegram_user_id, audio, performer=attachment['audio']['artist'],
+                                               title=attachment['audio']['title'], timeout=120)
+                        asyncio.get_event_loop().run_until_complete(
+                            redis.execute("HSET", "files:audio:{0}".format(audio_hash), "FILE_ID", audio.audio.file_id))
                 if attachment['type'] == "sticker":
                     sticker_hash = sha1(attachment['sticker']['images'][4]['url'].encode("UTF-8")).hexdigest()
                     sticker_file_id = asyncio.get_event_loop().run_until_complete(
-                        redis.execute("HGET", "files:stickers:{0}".format(sticker_hash), "FILE_ID"))['details']
+                        redis.execute("HGET", "files:sticker:{0}".format(sticker_hash), "FILE_ID"))['details']
 
                     if sticker_file_id:
                         logging.debug("Стикер с хэшем {0} находится в кэше, отправляется по File ID.".format(sticker_hash))
                         bot.send_sticker(telegram_user_id, sticker=sticker_file_id)
                     else:
                         logging.debug("Стикер с хэшем {0} не найдено в кэше, загружается новый.".format(sticker_hash))
-
                         sticker_png = Image.open(BytesIO(
                             requests.get(attachment['sticker']['images'][4]['url'], stream=True).content))
                         sticker_webp = BytesIO()
@@ -102,7 +119,7 @@ def poll_user(user, user_id, bot):
 
                         sticker = bot.send_sticker(telegram_user_id, sticker=sticker_webp)
                         asyncio.get_event_loop().run_until_complete(
-                            redis.execute("HSET", "files:stickers:{0}".format(sticker_hash), "FILE_ID", sticker.sticker.file_id))
+                            redis.execute("HSET", "files:sticker:{0}".format(sticker_hash), "FILE_ID", sticker.sticker.file_id))
 
             sender = [sender for sender in response_lph['profiles'] if sender['id'] == message['from_id']][0]
             if message['text']:
