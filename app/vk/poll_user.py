@@ -78,7 +78,6 @@ def poll_user(user, user_id, bot):
                     if not video_url:
                         continue
 
-                    # TODO: Добавить кэширование видео
                     video = BytesIO()
                     video.write(requests.get(video_url, stream=True).content)
                     video.seek(0)
@@ -110,7 +109,7 @@ def poll_user(user, user_id, bot):
                         logging.debug("Стикер с хэшем {0} находится в кэше, отправляется по File ID.".format(sticker_hash))
                         bot.send_sticker(telegram_user_id, sticker=sticker_file_id)
                     else:
-                        logging.debug("Стикер с хэшем {0} не найдено в кэше, загружается новый.".format(sticker_hash))
+                        logging.debug("Стикер с хэшем {0} не найден в кэше, загружается новый.".format(sticker_hash))
                         sticker_png = Image.open(BytesIO(
                             requests.get(attachment['sticker']['images'][4]['url'], stream=True).content))
                         sticker_webp = BytesIO()
@@ -129,6 +128,7 @@ def poll_user(user, user_id, bot):
                 message_text = "*{0} {1}*".format(sender['first_name'], sender['last_name'])
 
             # Проверяем, есть ли какое-то медиа (фотографии, видео)
+            # TODO: Добавить кэширование фотографий, видео
             if media:
                 bot.send_media_group(telegram_user_id, media, timeout=120)
 

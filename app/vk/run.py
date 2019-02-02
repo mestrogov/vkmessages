@@ -16,10 +16,9 @@ def start_polling(bot):
         asyncio.set_event_loop(loop)
 
         users = asyncio.get_event_loop().run_until_complete(redis.execute("SMEMBERS", "users"))['details']
-        logging.debug("Users in Redis: " + str(users))
+        logging.debug("Пользователи в Redis: " + str(users))
         while True:
             for user in users:
-                logging.debug("User in loop: " + str(user))
                 user_id = user
                 # Делаем dict из list'а (HGETALL возвращает list); взято отсюда: https://stackoverflow.com/a/6900977
                 user = dict(zip_longest(*[iter((asyncio.get_event_loop().run_until_complete(redis.execute("HGETALL", user)))
