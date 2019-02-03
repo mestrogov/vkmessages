@@ -1,4 +1,4 @@
 # Packages
 aioredis>=1.2.0
 requests>=2.21.0
-python-telegram-bot>=11.1.0
+pyrogram>=0.10.3

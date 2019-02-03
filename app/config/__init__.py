@@ -13,6 +13,9 @@ try:
     COMMIT = str(run(["git log --pretty=format:'%h' -n 1"], shell=True, stdout=PIPE).stdout.decode("UTF-8"))
     DEVELOPER_MODE = parse_as_boolean(getenv("DEVELOPER_MODE", False))
     WORKERS = int(getenv("WORKERS", 4))
+    # Настройки Telegram клиента
+    API_ID = int(getenv("API_ID", None))
+    API_HASH = str(getenv("API_HASH", None))
     BOT_TOKEN = str(getenv("BOT_TOKEN", None))
 
     # Настройки Redis
