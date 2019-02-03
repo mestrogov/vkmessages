@@ -13,7 +13,7 @@ def debug(client, message):
             "\n\n**Информация о приложении:** `\nVersion: {0}`\n`Commit: {1}`\n`Developer Mode: {2}`"
             "\n\n**Информация о пользователе:** \n`User ID: {3}`\n`Message ID: {4}`\n`Language Code: {5}`".format(
                 config.VERSION, config.COMMIT, config.DEVELOPER_MODE, message.from_user.id, message.message_id,
-                message.from_user.language_code), parse_mode="Markdown")
+                message.from_user.language_code))
     except Exception as e:
         try:
             client.send_message(

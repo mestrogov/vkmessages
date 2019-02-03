@@ -10,7 +10,7 @@ import asyncio
 import logging
 
 
-def start_polling(bot):
+def start_polling(client):
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -25,7 +25,7 @@ def start_polling(bot):
                                                ['details'])] * 2, fillvalue=""))
                 if parse_as_boolean(user['active']):
                     # TODO: Использовать Dramatiq вместо этого самопального кода
-                    result = poll_user(user, user_id, bot)
+                    result = poll_user(user, user_id, client)
                     logging.debug("Выполнен polling пользователя {0}, результат: {1}".format(user_id, result))
 
             sleep(0.1)

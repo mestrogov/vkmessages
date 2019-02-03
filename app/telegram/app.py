@@ -8,13 +8,12 @@ from app.telegram.commands.start import start as start_command
 import logging
 
 
-def run():
+def get_client():
     try:
-        app = Client(session_name=config.BOT_TOKEN, api_id=config.API_ID, api_hash=config.API_HASH)
-        app.add_handler(MessageHandler(start_command, Filters.command("start")))
-        app.add_handler(MessageHandler(debug_command, Filters.command("debug")))
-        app.run()
+        client = Client(session_name=config.BOT_TOKEN, api_id=config.API_ID, api_hash=config.API_HASH)
+        client.add_handler(MessageHandler(start_command, Filters.command("start")))
+        client.add_handler(MessageHandler(debug_command, Filters.command("debug")))
 
-        return app
+        return client
     except Exception as e:
         return e

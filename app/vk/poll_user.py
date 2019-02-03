@@ -2,7 +2,7 @@
 
 from app import logging
 from app.remote.redis import Redis as redis
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, InputMediaVideo
+from pyrogram import InputMediaPhoto, InputMediaVideo, InlineKeyboardMarkup, InlineKeyboardButton
 from PIL import Image
 from io import BytesIO
 from hashlib import sha1
@@ -14,7 +14,7 @@ import asyncio
 import logging
 
 
-def poll_user(user, user_id, bot):
+def poll_user(user, user_id, client):
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -88,15 +88,15 @@ def poll_user(user, user_id, bot):
 
                     if audio_file_id:
                         logging.debug("Аудио с хэшем {0} находится в кэше, отправляется по File ID.".format(audio_hash))
-                        bot.send_audio(telegram_user_id, audio_file_id)
+                        client.send_audio(telegram_user_id, audio_file_id)
                     else:
                         logging.debug("Аудио с хэшем {0} не найдено в кэше, загружается новый.".format(audio_hash))
                         audio = BytesIO()
                         audio.write(requests.get(attachment['audio']['url'], stream=True).content)
                         audio.seek(0)
 
-                        audio = bot.send_audio(telegram_user_id, audio, performer=attachment['audio']['artist'],
-                                               title=attachment['audio']['title'], timeout=120)
+                        audio = client.send_audio(telegram_user_id, audio, performer=attachment['audio']['artist'],
+                                                  title=attachment['audio']['title'], timeout=120)
                         asyncio.get_event_loop().run_until_complete(
                             redis.execute("HSET", "files:audio:{0}".format(audio_hash), "FILE_ID", audio.audio.file_id))
                 if attachment['type'] == "sticker":
@@ -106,33 +106,33 @@ def poll_user(user, user_id, bot):
 
                     if sticker_file_id:
                         logging.debug("Стикер с хэшем {0} находится в кэше, отправляется по File ID.".format(sticker_hash))
-                        bot.send_sticker(telegram_user_id, sticker=sticker_file_id)
+                        client.send_sticker(telegram_user_id, sticker=sticker_file_id)
                     else:
                         logging.debug("Стикер с хэшем {0} не найден в кэше, загружается новый.".format(sticker_hash))
-                        sticker_png = Image.open(BytesIO(
-                            requests.get(attachment['sticker']['images'][4]['url'], stream=True).content))
+                        sticker_png = Image.open(
+                            BytesIO(requests.get(attachment['sticker']['images'][4]['url'], stream=True).content))
                         sticker_webp = BytesIO()
                         sticker_png.save(sticker_webp, format="WEBP", lossless=True, quality=100, method=6)
                         sticker_webp.seek(0)
 
-                        sticker = bot.send_sticker(telegram_user_id, sticker=sticker_webp)
+                        sticker = client.send_sticker(telegram_user_id, bytes(sticker_webp))
                         asyncio.get_event_loop().run_until_complete(
                             redis.execute("HSET", "files:sticker:{0}".format(sticker_hash), "FILE_ID", sticker.sticker.file_id))
 
             sender = [sender for sender in response_lph['profiles'] if sender['id'] == message['from_id']][0]
             if message['text']:
-                message_text = "*{0} {1}*\n\n{2}".format(sender['first_name'], sender['last_name'],
-                                                         markup_multipurpose_fixes(message['text']))
+                message_text = "**{0} {1}**\n\n{2}".format(sender['first_name'], sender['last_name'],
+                                                           markup_multipurpose_fixes(message['text']))
             else:
-                message_text = "*{0} {1}*".format(sender['first_name'], sender['last_name'])
+                message_text = "**{0} {1}**".format(sender['first_name'], sender['last_name'])
 
             # Проверяем, есть ли какое-то медиа (фотографии, видео)
             # TODO: Добавить кэширование фотографий, видео
             if media:
-                bot.send_media_group(telegram_user_id, media, timeout=120)
+                client.send_media_group(telegram_user_id, media, timeout=120)
 
-            markup = InlineKeyboardMarkup([[InlineKeyboardButton("📋 Подробнее", callback_data="TEST")]])
-            message_data = bot.send_message(telegram_user_id, message_text, reply_markup=markup, parse_mode="Markdown")
+            markup = InlineKeyboardMarkup([[InlineKeyboardButton("📋 Подробнее", callback_data=b"TEST")]])
+            message_data = client.send_message(telegram_user_id, message_text, reply_markup=markup)
 
             # TODO: Возвратить, когда будет нужно
             # tg_message_id = str(message_data.chat.id) + "_" + str(message_data.message_id)
