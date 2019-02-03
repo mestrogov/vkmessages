@@ -3,7 +3,7 @@
 
 import requests
 from secrets import token_hex
-from app.utils.vk_sign_data import sign_data
+from app.vk.utils.sign_data import sign_data
 
 clients = [
     {

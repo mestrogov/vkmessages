@@ -6,9 +6,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from PIL import Image
 from io import BytesIO
 from hashlib import sha1
-from app.utils.vk_sign_data import sign_data
-from app.utils.markup_fixes import markup_multipurpose_fixes
-from app import config
+from app.vk.utils.sign_data import sign_data
+from app.telegram.utils.markup_fixes import markup_multipurpose_fixes
 from operator import itemgetter
 import requests
 import asyncio

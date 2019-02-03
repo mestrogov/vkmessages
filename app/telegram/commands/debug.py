@@ -2,15 +2,11 @@
 
 from app import logging
 from app import config as config
-from app.telegram.utils.extract_command import extract_command
 import logging
 
 
 def debug(client, message):
     try:
-        if not extract_command(message.text) == "debug":
-            return
-
         client.send_message(
             message.from_user.id,
             "Ниже находится информация, которая может оказаться полезной."

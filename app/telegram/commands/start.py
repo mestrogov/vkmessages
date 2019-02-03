@@ -1,15 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from app import logging
-from app.telegram.utils.extract_command import extract_command
 import logging
 
 
 def start(client, message):
     try:
-        if not extract_command(message.text) == "start":
-            return
-
         client.send_message(
             message.from_user.id,
             "Приветствую тебя, {0} {1}!"
