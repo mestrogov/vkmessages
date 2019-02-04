@@ -84,6 +84,7 @@ def poll_user(user, user_id, client):
                         video.write(requests.get(video_url, stream=True).content)
                         media.extend([InputMediaVideo(video.name, caption=attachment['video']['title'],
                                                       supports_streaming=True)])
+                # TODO: Добавить поддержку плейлистов (корректное отображение)
                 if attachment['type'] == "audio":
                     audio_hash = sha1(attachment['audio']['url'].encode("UTF-8")).hexdigest()
                     audio_file_id = asyncio.get_event_loop().run_until_complete(

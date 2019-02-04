@@ -12,11 +12,10 @@ try:
     VERSION = str(getenv("VERSION", "Unknown"))
     COMMIT = str(run(["git log --pretty=format:'%h' -n 1"], shell=True, stdout=PIPE).stdout.decode("UTF-8"))
     DEVELOPER_MODE = parse_as_boolean(getenv("DEVELOPER_MODE", False))
-    WORKERS = int(getenv("WORKERS", 4))
     # Настройки Telegram клиента
-    API_ID = int(getenv("API_ID", None))
-    API_HASH = str(getenv("API_HASH", None))
-    BOT_TOKEN = str(getenv("BOT_TOKEN", None))
+    API_ID = str(getenv("API_ID"))
+    API_HASH = str(getenv("API_HASH"))
+    BOT_TOKEN = str(getenv("BOT_TOKEN"))
 
     # Настройки Redis
     REDIS_HOST = str(getenv("REDIS_HOST", "127.0.0.1"))
@@ -24,6 +23,6 @@ try:
 
     # Дополнительные настройки приложения
     MESSAGE_CACHE_TIME = int(getenv("MESSAGE_CACHE_TIME", 86400))
-except (KeyError, IndexError):
-    logging.critical("Exception has been occurred while trying to get environment variables.", exc_info=True)
+except (KeyError, TypeError):
+    logging.critical("Произошла ошибка при попытке формирования конфигурационного файла.", exc_info=True)
     exit(1)

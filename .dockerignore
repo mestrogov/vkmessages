@@ -8,3 +8,6 @@ docker-compose.yml
 .idea
 .env
 venv
+
+LICENSE
+README.md
