@@ -3,7 +3,7 @@
 from app import logging
 from app.remote.redis import Redis as redis
 from app.telegram.app import get_client as telegram_get_client
-from app.vk.run import start_polling as vk_start_polling
+from app.vk.app import start_polling as vk_start_polling
 from threading import Thread
 from time import sleep
 import logging
