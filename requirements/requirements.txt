@@ -1,4 +1,5 @@
 # Packages
 aioredis==1.2.0
 requests==2.21.0
-pyrogram==0.10.3
+pyrogram[fast]==0.10.3
+Pillow==5.4.1

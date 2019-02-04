@@ -68,7 +68,7 @@ def poll_user(user, user_id, client):
                         photo.write(requests.get(photo_sorted_sizes[-1]['url'], stream=True).content)
                         media.extend([InputMediaPhoto(photo.name)])
                 if attachment['type'] == "video":
-                    # Получаем видео, которое сможем загрузить при лимите в 1500 МБ
+                    # Получаем видео, которое сможем загрузить при лимите в 1.5 ГБ
                     video_url = None
                     for video_quality in attachment['video']['files']:
                         if video_quality == "hls" or video_quality == "external":
@@ -151,7 +151,8 @@ def poll_user(user, user_id, client):
             # await redis.execute("HSET", "messages:{0}".format(tg_message_id), "VK_MESSAGE_ID", vk_message_id)
             # await redis.execute("EXPIRE", "messages:{0}".format(tg_message_id), config.MESSAGE_CACHE_TIME)
 
-        asyncio.get_event_loop().run_until_complete(redis.execute("HSET", user_id, "VK_LP_PTS", response_lph['new_pts']))
+        asyncio.get_event_loop().run_until_complete(redis.execute("HSET", user_id,
+                                                                  "VK_LP_PTS", response_lph['new_pts']))
         return {"status": "OK", "details": None}
     except Exception as e:
         logging.error("Произошла ошибка при polling'е аккаунта VK пользователя {0}.".format(user_id), exc_info=True)
