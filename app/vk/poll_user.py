@@ -88,6 +88,8 @@ def poll_user(user, user_id, client):
                     if not video:
                         logging.debug("Видео ({0}) не найдено в кэше, загружается новое.".format(video_hash))
                         with NamedTemporaryFile(suffix=".mp4") as video_file:
+                            logging.debug("Видео ({0}) сохраняется во временный файл {1}.".format(
+                                video_hash, video_file.name))
                             video_file.write(requests.get(video_url, stream=True).content)
 
                             # Отправляем видео и сразу удаляем (это необходимо, чтобы получить File ID видео)
@@ -106,26 +108,26 @@ def poll_user(user, user_id, client):
                 # TODO: Добавить поддержку плейлистов (корректное отображение)
                 if attachment['type'] == "audio":
                     audio_hash = sha1(attachment['audio']['url'].encode("UTF-8")).hexdigest()
-                    audio_file_id = asyncio.get_event_loop().run_until_complete(
+                    audio = asyncio.get_event_loop().run_until_complete(
                         redis.execute("HGET", "files:audio:{0}".format(audio_hash), "FILE_ID"))['details']
 
                     # В Redis нет смысла сохранять исполнителя и название песни, так как при последующей отправке по
                     # File ID, данные об исполнителе и названии песни остаются.
-                    if audio_file_id:
+                    if audio:
                         logging.debug("Аудио ({0}) находится в кэше, отправляется по File ID.".format(audio_hash))
-                        client.send_audio(telegram_user_id, audio_file_id)
+                        client.send_audio(telegram_user_id, audio)
                     else:
                         logging.debug("Аудио ({0}) не найдено в кэше, загружается новое.".format(audio_hash))
-                        with NamedTemporaryFile(suffix=".mp3") as audio:
+                        with NamedTemporaryFile(suffix=".mp3") as audio_file:
                             logging.debug("Аудио ({0}) сохраняется во временный файл {1}.".format(
-                                audio_hash, audio.name))
-                            audio.write(requests.get(attachment['audio']['url'], stream=True).content)
-                            audio = client.send_audio(telegram_user_id, audio.name,
+                                audio_hash, audio_file.name))
+                            audio_file.write(requests.get(attachment['audio']['url'], stream=True).content)
+                            audio = client.send_audio(telegram_user_id, audio_file.name,
                                                       performer=attachment['audio']['artist'],
-                                                      title=attachment['audio']['title'])
+                                                      title=attachment['audio']['title']).audio.file_id
 
                         asyncio.get_event_loop().run_until_complete(
-                            redis.execute("HSET", "files:audio:{0}".format(audio_hash), "FILE_ID", audio.audio.file_id))
+                            redis.execute("HSET", "files:audio:{0}".format(audio_hash), "FILE_ID", audio))
                 if attachment['type'] == "sticker":
                     sticker_hash = sha1(attachment['sticker']['images'][4]['url'].encode("UTF-8")).hexdigest()
                     sticker = asyncio.get_event_loop().run_until_complete(
