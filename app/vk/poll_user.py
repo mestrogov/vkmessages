@@ -6,8 +6,9 @@ from pyrogram import InputMediaPhoto, InputMediaVideo, InlineKeyboardMarkup, Inl
 from PIL import Image
 from io import BytesIO
 from hashlib import sha1
+from app.utils.redis_hgetall import redis_hgetall as hgetall
 from app.vk.utils.sign_data import sign_data
-from app.telegram.utils.markup_fixes import markup_multipurpose_fixes
+from app.vk.utils.markup_fixes import markup_multipurpose_fixes
 from tempfile import NamedTemporaryFile
 from operator import itemgetter
 import requests
@@ -73,17 +74,33 @@ def poll_user(user, user_id, client):
                     for video_quality in attachment['video']['files']:
                         if video_quality == "hls" or video_quality == "external":
                             continue
-                        video_size = int(int(requests.get(attachment['video']['files'][video_quality], stream=True).
-                                             headers['Content-length'])/1024/1024)
-                        if video_size < 1535:
+                        video_size = int(requests.get(attachment['video']['files'][video_quality], stream=True).
+                                         headers['Content-length'])
+                        if video_size < 1500 * 1024 * 1024:
                             video_url = attachment['video']['files'][video_quality]
                     if not video_url:
                         continue
 
-                    with NamedTemporaryFile(suffix=".mp4", delete=False) as video:
-                        video.write(requests.get(video_url, stream=True).content)
-                        media.extend([InputMediaVideo(video.name, caption=attachment['video']['title'],
-                                                      supports_streaming=True)])
+                    video_hash = sha1(video_url.split("?extra")[0].encode("UTF-8")).hexdigest()
+                    video = asyncio.get_event_loop().run_until_complete(hgetall("files:video:{0}".format(video_hash)))
+
+                    if not video:
+                        logging.debug("Видео ({0}) не найдено в кэше, загружается новое.".format(video_hash))
+                        with NamedTemporaryFile(suffix=".mp4") as video_file:
+                            video_file.write(requests.get(video_url, stream=True).content)
+
+                            # Отправляем видео и сразу удаляем (это необходимо, чтобы получить File ID видео)
+                            video_message = client.send_video(telegram_user_id, video_file.name,
+                                                              disable_notification=True)
+                            client.delete_messages(telegram_user_id, video_message.message_id)
+
+                            video['FILE_ID'] = video_message.video.file_id
+                            video['CAPTION'] = attachment['video']['title']
+                        asyncio.get_event_loop().run_until_complete(redis.execute(
+                            "HSET", "files:video:{0}".format(video_hash), "FILE_ID", video['FILE_ID'],
+                            "CAPTION", video['CAPTION']))
+
+                    media.extend([InputMediaVideo(video['FILE_ID'], caption=video['CAPTION'])])
                 # TODO: Добавить поддержку плейлистов (корректное отображение)
                 if attachment['type'] == "audio":
                     audio_hash = sha1(attachment['audio']['url'].encode("UTF-8")).hexdigest()
@@ -95,7 +112,7 @@ def poll_user(user, user_id, client):
 
                         client.send_audio(telegram_user_id, audio_file_id)
                     else:
-                        logging.debug("Аудио ({0}) не найдено в кэше, загружается новый.".format(audio_hash))
+                        logging.debug("Аудио ({0}) не найдено в кэше, загружается новое.".format(audio_hash))
 
                         with NamedTemporaryFile(suffix=".mp3") as audio:
                             logging.debug("Аудио ({0}) сохраняется во временный файл {1}.".format(
@@ -140,6 +157,7 @@ def poll_user(user, user_id, client):
 
             # Проверяем, есть ли какое-то медиа (фотографии, видео)
             # TODO: Добавить кэширование фотографий, видео
+            # TODO: Добавить chat_action (загрузка фотографии, видео)
             if media:
                 client.send_media_group(telegram_user_id, media)
 
