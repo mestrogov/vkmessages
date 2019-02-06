@@ -118,6 +118,17 @@ def poll_user(user, user_id, client):
                         client.send_audio(telegram_user_id, audio)
                     else:
                         logging.debug("Аудио ({0}) не найдено в кэше, загружается новое.".format(audio_hash))
+                        # VK может вернуть пустое URL, проверяем это сначала
+                        if not attachment['audio']['url']:
+                            logging.debug("Аудио, которое было отправлено пользователю, не может быть загружено, "
+                                          "так как в нем не содержится ссылки.")
+                            client.send_message(telegram_user_id,
+                                                "❗ Аудио ({0} — {1}) не может быть отправлено вам, так как "
+                                                "оно защищено авторскими правами и может быть прослушано только с "
+                                                "территории Российской Федерации.".format(
+                                                    attachment['audio']['artist'], attachment['audio']['title']))
+                            continue
+
                         with NamedTemporaryFile(suffix=".mp3") as audio_file:
                             logging.debug("Аудио ({0}) сохраняется во временный файл {1}.".format(
                                 audio_hash, audio_file.name))
