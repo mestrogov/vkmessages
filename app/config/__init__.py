@@ -20,9 +20,6 @@ try:
     # Настройки Redis
     REDIS_HOST = str(getenv("REDIS_HOST", "127.0.0.1"))
     REDIS_PORT = int(getenv("REDIS_PORT", 6379))
-
-    # Дополнительные настройки приложения
-    MESSAGE_CACHE_TIME = int(getenv("MESSAGE_CACHE_TIME", 86400))
 except (KeyError, TypeError):
     logging.critical("Произошла ошибка при попытке формирования конфигурационного файла.", exc_info=True)
     exit(1)
