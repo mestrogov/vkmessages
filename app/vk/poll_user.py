@@ -59,6 +59,7 @@ def poll_user(user, user_id, client):
         for message in response_lph['messages']['items']:
             if int(message['out']) == 1:
                 continue
+            message_id = "{0}_{1}".format(message['peer_id'], message['conversation_message_id'])
 
             # Проверяем сообщение на наличие вложений в сообщении
             media = []
@@ -126,7 +127,7 @@ def poll_user(user, user_id, client):
                                                 "❗ Аудио ({0} — {1}) не может быть отправлено вам, так как "
                                                 "оно защищено авторскими правами и может быть прослушано только с "
                                                 "территории Российской Федерации.".format(
-                                                    attachment['audio']['artist'], attachment['audio']['title']))
+                                                    attachment['audio']['title'], attachment['audio']['artist']))
                             continue
 
                         with NamedTemporaryFile(suffix=".mp3") as audio_file:
@@ -161,6 +162,10 @@ def poll_user(user, user_id, client):
                         asyncio.get_event_loop().run_until_complete(
                             redis.execute("HSET", "files:sticker:{0}".format(sticker_hash), "FILE_ID", sticker))
 
+            # Проверяем, есть ли какое-то медиа (фотографии, видео)
+            if media:
+                client.send_media_group(telegram_user_id, media)
+
             sender = [sender for sender in response_lph['profiles'] if sender['id'] == message['from_id']][0]
             if message['text']:
                 message_text = "**{0} {1}**\n\n{2}".format(sender['first_name'], sender['last_name'],
@@ -168,21 +173,15 @@ def poll_user(user, user_id, client):
             else:
                 message_text = "**{0} {1}**".format(sender['first_name'], sender['last_name'])
 
-            # Проверяем, есть ли какое-то медиа (фотографии, видео)
-            if media:
-                client.send_media_group(telegram_user_id, media)
-
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📋 Подробнее", callback_data=b"TEST")]])
             message_data = client.send_message(telegram_user_id, message_text, reply_markup=markup)
 
-            # TODO: Возвратить, когда будет нужно
-            # tg_message_id = str(message_data.chat.id) + "_" + str(message_data.message_id)
-            # vk_message_id = str(message['peer_id']) + "_" + str(message['conversation_message_id'])
-            # await redis.execute("HSET", "messages:{0}".format(tg_message_id), "VK_MESSAGE_ID", vk_message_id)
-            # await redis.execute("EXPIRE", "messages:{0}".format(tg_message_id), config.MESSAGE_CACHE_TIME)
+            asyncio.get_event_loop().run_until_complete(
+                redis.execute("HSET", "message:{0}".format(message_id), "TELEGRAM_MESSAGE_ID",
+                              "{0}_{1}".format(message_data.chat.id, message_data.message_id)))
 
-        asyncio.get_event_loop().run_until_complete(redis.execute("HSET", user_id,
-                                                                  "VK_LP_PTS", response_lph['new_pts']))
+        asyncio.get_event_loop().run_until_complete(
+            redis.execute("HSET", user_id, "VK_LP_PTS", response_lph['new_pts']))
         return {"status": "OK", "details": None}
     except Exception as e:
         logging.error("Произошла ошибка при polling'е аккаунта VK пользователя {0}.".format(user_id), exc_info=True)
