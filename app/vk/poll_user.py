@@ -168,21 +168,19 @@ def poll_user(user, user_id, client):
                 client.send_media_group(telegram_user_id, media)
 
             sender = [sender for sender in response_lph['profiles'] if sender['id'] == message['from_id']][0]
-            if message['text']:
-                message_text = "**{0} {1}**\n\n{2}".format(sender['first_name'], sender['last_name'],
-                                                           markup_multipurpose_fixes(message['text']))
-            else:
-                message_text = "**{0} {1}**".format(sender['first_name'], sender['last_name'])
+            formatted_message_text = markup_multipurpose_fixes(message['text'])
+            message_text = "**{0} {1}**{2}".format(sender['first_name'], sender['last_name'],
+                                                   "\n\n" + formatted_message_text if formatted_message_text else "")
 
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📋 Подробнее", callback_data=b"TEST")]])
             message_data = client.send_message(telegram_user_id, message_text, reply_markup=markup)
 
             asyncio.get_event_loop().run_until_complete(
-                redis.execute("HSET", "message:{0}".format(message_id), "TELEGRAM_MESSAGE_ID",
-                              "{0}_{1}".format(message_data.chat.id, message_data.message_id)))
+                redis.execute("HSET", "message:{0}_{1}".format(message_data.chat.id, message_data.message_id),
+                              "TELEGRAM_MESSAGE_ID", message_id))
 
-        asyncio.get_event_loop().run_until_complete(
-            redis.execute("HSET", user_id, "VK_LP_PTS", response_lph['new_pts']))
+        asyncio.get_event_loop().run_until_complete(redis.execute("HSET", user_id,
+                                                                  "VK_LP_PTS", response_lph['new_pts']))
         return {"status": "OK", "details": None}
     except Exception as e:
         logging.error("Произошла ошибка при polling'е аккаунта VK пользователя {0}.".format(user_id), exc_info=True)

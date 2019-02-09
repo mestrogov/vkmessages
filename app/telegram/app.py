@@ -14,6 +14,8 @@ def get_client():
                         app_version="VKMessages v{0}".format(config.VERSION))
         client.add_handler(MessageHandler(start_command, Filters.command("start")))
         client.add_handler(MessageHandler(debug_command, Filters.command("debug")))
+        # Этот MessageHandler должен быть обязательно последним
+        # client.add_handler(MessageHandler())
 
         return client
     except Exception as e:
