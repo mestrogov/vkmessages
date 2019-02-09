@@ -4,7 +4,7 @@ from app import logging
 from app.remote.redis import Redis as redis
 from app.utils.redis_hgetall import redis_hgetall as hgetall
 from app.utils.parse_as_boolean import parse_as_boolean
-from app.vk.poll_user import poll_user
+from app.vk.polling import poll_user
 from time import sleep
 import asyncio
 import logging

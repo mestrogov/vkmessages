@@ -27,7 +27,7 @@ def get_token(username, password, code=None, clients_number=0, scope="nohttps,al
                                       client_user_agent, version, code)
     try:
         assert non_refreshed['access_token']
-    except (KeyError, TypeError):
+    except (AssertionError, KeyError, TypeError):
         return non_refreshed
 
     refreshed = refresh_token(non_refreshed['access_token'], non_refreshed['secret'], device_id, client_user_agent,

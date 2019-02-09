@@ -5,6 +5,7 @@ from app import config as config
 from pyrogram import Client, MessageHandler, Filters
 from app.telegram.commands.debug import debug as debug_command
 from app.telegram.commands.start import start as start_command
+from app.telegram.message_handler import message_handler
 import logging
 
 
@@ -15,7 +16,7 @@ def get_client():
         client.add_handler(MessageHandler(start_command, Filters.command("start")))
         client.add_handler(MessageHandler(debug_command, Filters.command("debug")))
         # Этот MessageHandler должен быть обязательно последним
-        # client.add_handler(MessageHandler())
+        client.add_handler(MessageHandler(message_handler))
 
         return client
     except Exception as e:

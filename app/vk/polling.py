@@ -26,14 +26,14 @@ def poll_user(user, user_id, client):
         try:
             assert user['VK_TOKEN']
             assert user['VK_SECRET']
-        except (KeyError, TypeError):
+        except (AssertionError, KeyError, TypeError):
             return {"status": "ERROR", "details": "У пользователя указан неверный VK токен (или он отстутствует)"}
 
         try:
             assert user['VK_LP_KEY']
             assert user['VK_LP_SERVER']
             assert user['VK_LP_PTS']
-        except (KeyError, TypeError):
+        except (AssertionError, KeyError, TypeError):
             logging.debug("У пользователя {0} нет данных о LongPoll сервере.".format(user_id))
 
             data = {"need_pts": 1, "lp_version": 3, "access_token": user['VK_TOKEN'], "v": 5.92}
@@ -170,14 +170,16 @@ def poll_user(user, user_id, client):
             sender = [sender for sender in response_lph['profiles'] if sender['id'] == message['from_id']][0]
             formatted_message_text = markup_multipurpose_fixes(message['text'])
             message_text = "**{0} {1}**{2}".format(sender['first_name'], sender['last_name'],
+                                                   # Если есть текст в сообщении, то добавляем его в сообщении
                                                    "\n\n" + formatted_message_text if formatted_message_text else "")
 
             markup = InlineKeyboardMarkup([[InlineKeyboardButton("📋 Подробнее", callback_data=b"TEST")]])
             message_data = client.send_message(telegram_user_id, message_text, reply_markup=markup)
 
             asyncio.get_event_loop().run_until_complete(
-                redis.execute("HSET", "message:{0}_{1}".format(message_data.chat.id, message_data.message_id),
-                              "TELEGRAM_MESSAGE_ID", message_id))
+                redis.execute("SET", "message:telegram:{0}_{1}".format(message_data.chat.id, message_data.message_id),
+                              message_id)
+            )
 
         asyncio.get_event_loop().run_until_complete(redis.execute("HSET", user_id,
                                                                   "VK_LP_PTS", response_lph['new_pts']))
