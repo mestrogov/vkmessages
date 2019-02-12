@@ -18,7 +18,7 @@ def parse_sticker(client, file_id, access_token, sig_secret, peer_id):
         redis.execute("GET", "files:vk:sticker:{0}".format(sticker_hash)))['details']
 
     if not sticker_id:
-        logging.debug("Стикер ({0}) не содержится в кэше, обрабатывается как новый...".format(sticker_hash))
+        logging.debug("Стикер не содержится в кэше, выполняются необходимые процессы...".format(sticker_hash))
         with NamedTemporaryFile(suffix=".webp") as sticker_webp_file:
             logging.debug("Стикер скачивается во временный файл {1}...".format(file_id, sticker_webp_file.name))
             client.download_media(file_id, sticker_webp_file.name)
