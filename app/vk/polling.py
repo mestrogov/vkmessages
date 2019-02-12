@@ -84,7 +84,8 @@ def poll_user(user, user_id, client):
                         continue
 
                     video_hash = sha1(video_url.split("?extra")[0].encode("UTF-8")).hexdigest()
-                    video = asyncio.get_event_loop().run_until_complete(hgetall("files:video:{0}".format(video_hash)))
+                    video = asyncio.get_event_loop().run_until_complete(
+                        hgetall("files:telegram:video:{0}".format(video_hash)))
 
                     if not video:
                         logging.debug("Видео ({0}) не найдено в кэше, загружается новое.".format(video_hash))
@@ -102,7 +103,7 @@ def poll_user(user, user_id, client):
                             video['CAPTION'] = attachment['video']['title']
 
                         asyncio.get_event_loop().run_until_complete(redis.execute(
-                            "HSET", "files:video:{0}".format(video_hash), "FILE_ID", video['FILE_ID'],
+                            "HSET", "files:telegram:video:{0}".format(video_hash), "FILE_ID", video['FILE_ID'],
                             "CAPTION", video['CAPTION']))
 
                     media.extend([InputMediaVideo(video['FILE_ID'], caption=video['CAPTION'])])
@@ -110,7 +111,7 @@ def poll_user(user, user_id, client):
                 if attachment['type'] == "audio":
                     audio_hash = sha1(attachment['audio']['url'].encode("UTF-8")).hexdigest()
                     audio = asyncio.get_event_loop().run_until_complete(
-                        redis.execute("HGET", "files:audio:{0}".format(audio_hash), "FILE_ID"))['details']
+                        redis.execute("HGET", "files:telegram:audio:{0}".format(audio_hash), "FILE_ID"))['details']
 
                     # В Redis нет смысла сохранять исполнителя и название песни, так как при последующей отправке по
                     # File ID, данные об исполнителе и названии песни остаются.
@@ -140,11 +141,11 @@ def poll_user(user, user_id, client):
                                                       title=attachment['audio']['title']).audio.file_id
 
                         asyncio.get_event_loop().run_until_complete(
-                            redis.execute("HSET", "files:audio:{0}".format(audio_hash), "FILE_ID", audio))
+                            redis.execute("HSET", "files:telegram:audio:{0}".format(audio_hash), "FILE_ID", audio))
                 if attachment['type'] == "sticker":
                     sticker_hash = sha1(attachment['sticker']['images'][4]['url'].encode("UTF-8")).hexdigest()
                     sticker = asyncio.get_event_loop().run_until_complete(
-                        redis.execute("HGET", "files:sticker:{0}".format(sticker_hash), "FILE_ID"))['details']
+                        redis.execute("HGET", "files:telegram:sticker:{0}".format(sticker_hash), "FILE_ID"))['details']
 
                     if sticker:
                         logging.debug("Стикер ({0}) находится в кэше, отправляется по File ID.".format(sticker_hash))
@@ -161,7 +162,7 @@ def poll_user(user, user_id, client):
                             sticker = client.send_sticker(telegram_user_id, sticker_file.name).sticker.file_id
 
                         asyncio.get_event_loop().run_until_complete(
-                            redis.execute("HSET", "files:sticker:{0}".format(sticker_hash), "FILE_ID", sticker))
+                            redis.execute("HSET", "files:telegram:sticker:{0}".format(sticker_hash), "FILE_ID", sticker))
 
             # Проверяем, есть ли какое-то медиа (фотографии, видео)
             if media:

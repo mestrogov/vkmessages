@@ -40,16 +40,15 @@ def message_handler(client, message):
         except AssertionError:
             logging.debug("Похоже, что это сообщение не является стикером..")
 
-        data = {"peer_id": peer_id, "random_id": randbits(32), "message": message.text,
-                "access_token": user['VK_TOKEN'], "v": 5.92}
-        response = requests.post("https://api.vk.com/method/messages.send",
-                                 data=sign_data(data, "messages.send", user['VK_SECRET'])).json()
-        logging.debug("Была совершена попытка отправки сообщения, VK вернул ответ: {0}".format(response))
-        if config.DEVELOPER_MODE:
-            message.reply("ℹ️ Была совершена попытка отправки сообщения, VK вернул ответ:\n\n`{0}`.".format(response),
-                          disable_notification=True)
-
-        return response
+        if message.text:
+            data = {"peer_id": peer_id, "random_id": randbits(32), "message": message.text,
+                    "access_token": user['VK_TOKEN'], "v": 5.92}
+            response = requests.post("https://api.vk.com/method/messages.send",
+                                     data=sign_data(data, "messages.send", user['VK_SECRET'])).json()
+            logging.debug("Сообщение было отправлено, VK вернул ответ: {0}".format(response))
+            if config.DEVELOPER_MODE:
+                message.reply("ℹ️ Сообщение было отправлено, VK вернул ответ:\n\n`{0}`.".format(response),
+                              disable_notification=True)
     except Exception as e:
         logging.error("Произошла ошибка при попытке выполнения метода.", exc_info=True)
         return e
