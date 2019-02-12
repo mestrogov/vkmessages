@@ -35,7 +35,7 @@ def message_handler(client, message):
         peer_id = vk_message_id.split("_")[0]
 
         try:
-            assert message.sticker.file_id
+            assert message.sticker
             parse_sticker(client, message.sticker.file_id, user['VK_TOKEN'], user['VK_SECRET'], peer_id)
         except AssertionError:
             logging.debug("Похоже, что это сообщение не является стикером..")

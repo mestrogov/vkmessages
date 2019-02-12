@@ -164,11 +164,11 @@ def poll_user(user, user_id, client):
                         asyncio.get_event_loop().run_until_complete(
                             redis.execute("HSET", "files:telegram:sticker:{0}".format(sticker_hash), "FILE_ID", sticker))
                 if attachment['type'] == "audio_message":
-                    voice_message = attachment['audio_message']
                     with NamedTemporaryFile(suffix=".ogg") as voice_message_file:
                         logging.debug("Голосовое сообщение сохраняется во временный файл {0}.".format(
                             voice_message_file.name))
-                        voice_message_file.write(requests.get(voice_message['link_ogg'], stream=True).content)
+                        voice_message_file.write(
+                            requests.get(attachment['audio_message']['link_ogg'], stream=True).content)
                         client.send_voice(telegram_user_id, voice_message_file.name)
 
             # Проверяем, есть ли какое-то медиа (фотографии, видео)
